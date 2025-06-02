@@ -11,25 +11,24 @@ div(class='relative min-h-screen')
     h1(class='uppercase text-gray-200 font-bold text-5xl font-rubik') Retro Strike
     div(class='text-3xl')
       light-board(:mode='["playing", "win"].includes(gameState) ? "forward" : "blink"' :speed='gameState === "win" ? 100 : 1000')
-    div(class='flex flex-row gap-12 text-xl py-4')
-      div(class='text-yellow-300') {{ elapsedTime }}
+    div(class='flex flex-row gap-12 text-xl py-4 pt-10')
+      div(class='text-yellow-300') {{ formattedElapsedTime }}
       div(class='text-red-300') {{ String(score).padStart(5, '0') }}
+      div(class='text-gray-300') x{{ combo }}
 
   div(class='fixed left-0 top-0 w-full h-full flex items-center justify-center')
     div(class='flex flex-col justify-center gap-6 animate-pulse' v-if="gameState === 'ready'")
       button(@click="startGame" class='text-3xl bg-white hover:bg-amber-200 text-black px-4 py-2 rounded uppercase font-rubik') Start
       div(class='uppercase') Or press mouse button to start
 
-    div(class='flex flex-col items-center justify-center rounded-xl bg-yellow-700/90 px-12 py-8 gap-6' v-if="gameState === 'win'")
+    div(class='flex flex-col items-center justify-center rounded-xl bg-lime-700/90 px-12 py-8 gap-6' v-if="gameState === 'win'")
       div(class='text-yellow-300 text-3xl uppercase') Victory!
-      div
-        | You have defeated all enemies in {{ elapsedTime }}!
-      score-post(:score='score' :elapsedTime='elapsedTime')
+      score-post(:score='score')
       button(@click="restartGame" class='bg-white text-black px-4 py-2 rounded uppercase hover:bg-amber-200 font-rubik') Restart
 
-    div(class='flex flex-col items-center justify-center gap-4 rounded-xl bg-red-100/70 px-12 py-8' v-if="gameState === 'lose'")
-      div.text-red-500.text-2xl.mb-4.uppercase(class='animate-pulse') Game Over
-      score-post(:score='score' :elapsedTime='elapsedTime')
+    div(class='flex flex-col items-center justify-center gap-6 rounded-xl bg-red-300/70 px-12 py-8' v-if="gameState === 'lose'")
+      div(class='text-red-500 text-2xl uppercase animate-pulse') Game Over
+      score-post(:score='score')
       button(@click="restartGame" class='text-2xl bg-white text-black hover:bg-amber-200 font-rubik' animate-pulse) Retry
 
   div(class='fixed bottom-0 left-0 right-0 text-center text-gray-400 text-sm p-4 flex items-center justify-center gap-8')
@@ -43,14 +42,16 @@ div(class='relative min-h-screen')
 <script setup>
 import { ref, onMounted } from 'vue'
 import { setPlayerName, useCommonData } from '@/common'
+const { elapsedTime, formattedElapsedTime, maxCombo } = useCommonData()
 
 const canvasWidth = 800
 const canvasHeight = 600
 
 const canvasEl = ref(null)
 const gameState = ref('win') // 'ready', 'playing', 'win', 'lose'
-const elapsedTime = ref('00:00')
+
 const score = ref(0)
+const combo = ref(0) // Combo multiplier
 
 const { playerName, startTime } = useCommonData()
 
@@ -75,6 +76,7 @@ const offsetY = 40
 const enemyWidth = 40
 const enemyHeight = 40
 const enemyTotalCount = rows * cols
+const comboTexts = []
 
 // Initialize enemies in a grid
 for (let row = 0; row < rows; row++) {
@@ -105,12 +107,17 @@ function resetAllEnemies() {
     }
   }
 }
+
 resetAllEnemies()
 
 
 let ctx, canvas, canvasRect, enemyImage, enemyDirection
 
 function updateBullets() {
+  if (gameState.value !== 'playing') {
+    return
+  }
+
   // Update and remove off-screen player bullets
   for (let i = bullets.length - 1; i >= 0; i--) {
     const bullet = bullets[i]
@@ -118,6 +125,7 @@ function updateBullets() {
 
     if (bullet.y + bullet.height < 0) {
       bullets.splice(i, 1)
+      combo.value = 0 // Reset combo when bullet goes off-screen
     }
   }
 
@@ -163,9 +171,7 @@ function updateEnemies() {
 
       if (hit) {
         bullets.splice(i, 1)
-        enemy.hit = true
-
-        score.value += 10
+        destroyEnemy(enemy)
         break
       }
     }
@@ -186,7 +192,7 @@ function updateEnemies() {
     enemyDirection *= -1
     enemies.forEach(enemy => {
       if (!enemy.hit) {
-        enemy.y += 10 // Drop down
+        enemy.y += 20 // Drop down
       }
     })
   }
@@ -197,14 +203,27 @@ function updateEnemies() {
   }
 }
 
+function destroyEnemy(enemy) {
+  enemy.hit = true
+  combo.value += 1
+  score.value += 10 * combo.value // Increase score with combo multiplier
+
+  if (combo.value > maxCombo.value) {
+    maxCombo.value = combo.value
+  }
+
+  if (combo.value >= 3) {
+    comboTexts.push({
+      x: enemy.x + enemy.width / 2,
+      y: enemy.y,
+      combo: combo.value,
+      life: 60 // 表示フレーム数（約1秒）
+    })
+  }
+}
+
 function updateStatus() {
-  const now = Date.now()
-
-  const elapsed = Math.floor((now - startTime.value) / 1000)
-  const minutes = String(Math.floor(elapsed / 60)).padStart(2, '0')
-  const seconds = String(elapsed % 60).padStart(2, '0')
-
-  elapsedTime.value = `${minutes}:${seconds}`
+  elapsedTime.value = Math.floor((Date.now() - startTime.value) / 1000)
 }
 
 function drawBullets() {
@@ -223,10 +242,31 @@ function drawBullets() {
   }
 }
 
+function drawCombo() {
+  for (let i = comboTexts.length - 1; i >= 0; i--) {
+    const item = comboTexts[i]
+    ctx.save()
+    ctx.font = 'bold 20px sans-serif'
+    ctx.fillStyle = 'yellow'
+    ctx.textAlign = 'center'
+    ctx.fillText(`Combo x${item.combo}`, item.x, item.y)
+    ctx.restore()
+
+    item.y -= 1 // 少し上に浮かせる演出
+    item.life--
+
+    if (item.life <= 0) {
+      comboTexts.splice(i, 1)
+    }
+  }
+}
+
 function startGame() {
   gameState.value = 'playing'
   startTime.value = Date.now()
   score.value = 0
+  combo.value = 0
+  maxCombo.value = 0
 }
 
 onMounted(() => {
@@ -254,10 +294,18 @@ onMounted(() => {
   // Update player position based on mouse
   window.addEventListener('mousemove', (e) => {
     if (gameState.value !== 'playing') return
-
     const mouseX = e.clientX - canvasRect.left
     player.x = mouseX - player.width / 2
   })
+
+  // タッチ対応
+  window.addEventListener('touchmove', (e) => {
+    if (gameState.value !== 'playing') return
+    if (e.touches.length === 0) return
+
+    const touchX = e.touches[0].clientX - canvasRect.left
+    player.x = touchX - player.width / 2
+  }, { passive: true }) // ←スクロール抑制しない（推奨）
 
   // Fire bullets at interval
   setInterval(() => {
@@ -311,6 +359,7 @@ function draw() {
   drawEnemies()
   drawPlayer()
   drawBullets()
+  drawCombo()
 }
 
 function doFrame() {
