@@ -1,59 +1,73 @@
 <template lang="pug">
+
 div(class='relative min-h-screen')
-  img(class='absolute inset-0 left-0 top-0 w-full h-full object-cover' src='/images/background1.jpg')
-  div(class='absolute left-0 top-0 right-0 bottom-0 flex items-center justify-center')
-    canvas(ref="canvasEl" class='bg-zinc-900/80 rounded-lg' :style='{ width: canvasWidth + "px", height: canvasHeight + "px" }'
-      :width="canvasWidth", :height="canvasHeight")
+  img(class='absolute inset-0 w-full h-full object-cover' src='/images/background1.jpg')
+  div(class='absolute inset-0 w-full h-full flex flex-col items-center justify-between')
+    div(class='py-6 h-full flex flex-col items-center justify-around')
+      div(class='flex-none text-center')
+        div(class='text-3xl')
+          light-board(:mode='["playing", "win"].includes(gameState) ? "forward" : "blink"' :speed='gameState === "win" ? 100 : 1000')
+        h1(class='uppercase text-gray-200 font-bold text-5xl font-rubik') Retro Strike
+        div(class='text-3xl')
+          light-board(:mode='["playing", "win"].includes(gameState) ? "forward" : "blink"' :speed='gameState === "win" ? 100 : 1000')
+      div(class='grow flex flex-col items-center justify-around')
+        div(class='')
+          div(class='uppercase flex items-center justify-center gap-2 text-amber-300 hover:text-amber-500 cursor-pointer'
+            @click='showLeaderboard = true')
+            icon(class='text-2xl' name='humbleicons:crown')
+            | LeaderBoard
+        div(class='flex flex-row gap-12 text-xl')
+          div(class='text-yellow-300') {{ formattedElapsedTime }}
+          div(class='text-red-300') {{ String(score).padStart(5, '0') }}
+          div(class='text-gray-300') x{{ combo }}
 
-  div(class='fixed top-0 w-full py-6 flex flex-col items-center justify-center')
-    div(class='text-3xl')
-      light-board(:mode='["playing", "win"].includes(gameState) ? "forward" : "blink"' :speed='gameState === "win" ? 100 : 1000')
-    h1(class='uppercase text-gray-200 font-bold text-5xl font-rubik') Retro Strike
-    div(class='text-3xl')
-      light-board(:mode='["playing", "win"].includes(gameState) ? "forward" : "blink"' :speed='gameState === "win" ? 100 : 1000')
-    div(class='flex flex-row gap-12 text-xl py-4 pt-10')
-      div(class='text-yellow-300') {{ formattedElapsedTime }}
-      div(class='text-red-300') {{ String(score).padStart(5, '0') }}
-      div(class='text-gray-300') x{{ combo }}
+    div(class='relative')
+      canvas(class='bg-zinc-900/80 rounded-lg' ref="canvasEl"
+        :style='{ width: canvasWidth + "px", height: canvasHeight + "px" }'
+        :width="canvasWidth", :height="canvasHeight")
 
-  div(class='fixed left-0 top-0 w-full h-full flex items-center justify-center')
-    div(class='flex flex-col justify-center gap-6 animate-pulse' v-if="gameState === 'ready'")
-      button(@click="startGame" class='text-3xl bg-white hover:bg-amber-200 text-black px-4 py-2 rounded uppercase font-rubik') Start
-      div(class='uppercase') Or press mouse button to start
+      div(class='absolute inset-0 w-full h-full flex items-center justify-center')
+        div(class='flex flex-col justify-center gap-6 animate-pulse' v-if="gameState === 'ready'")
+          button(@click="startGame" class='text-3xl bg-white hover:bg-amber-200 text-black px-4 py-2 rounded uppercase font-rubik') Start
+          div(class='uppercase') Or press mouse button to start
 
-    div(class='flex flex-col items-center justify-center rounded-xl bg-lime-700/90 px-12 py-8 gap-6' v-if="gameState === 'win'")
-      div(class='text-yellow-300 text-3xl uppercase') Victory!
-      score-post(:score='score')
-      button(@click="restartGame" class='bg-white text-black px-4 py-2 rounded uppercase hover:bg-amber-200 font-rubik') Restart
+        div(class='flex flex-col items-center justify-center rounded-xl bg-lime-700/90 px-12 py-8 gap-6' v-if="gameState === 'win'")
+          div(class='text-yellow-300 text-3xl uppercase') Victory!
+          score-post(:score='score')
+          button(@click="restartGame" class='bg-white text-black px-4 py-2 rounded uppercase hover:bg-amber-200 font-rubik') Restart
 
-    div(class='flex flex-col items-center justify-center gap-6 rounded-xl bg-red-300/70 px-12 py-8' v-if="gameState === 'lose'")
-      div(class='text-red-500 text-2xl uppercase animate-pulse') Game Over
-      score-post(:score='score')
-      button(@click="restartGame" class='text-2xl bg-white text-black hover:bg-amber-200 font-rubik' animate-pulse) Retry
+        div(class='flex flex-col items-center justify-center gap-6 rounded-xl bg-red-300/70 px-12 py-8' v-if="gameState === 'lose'")
+          div(class='text-red-500 text-2xl uppercase animate-pulse') Game Over
+          score-post(v-if='score > 0' :score='score')
+          button(@click="restartGame" class='text-2xl bg-white text-black hover:bg-amber-200 font-rubik' animate-pulse) Retry
 
-  div(class='fixed bottom-0 left-0 right-0 text-center text-gray-400 text-sm p-4 flex items-center justify-center gap-8')
-    div Made with ❤️ by Jingwood
-    div(class='flex items-center gap-1')
-      icon(name='humbleicons:brand-github')
-      NuxtLink(class='hover:text-gray-300' to='https://github.com/jingwood/retro-strike' target='_blank') See on GitHub
+        leaderboard(v-if='showLeaderboard'
+          class='absolute inset-0 w-full h-full')
+
+    div(class='text-center text-gray-400 text-xs p-4 flex items-center justify-center gap-8')
+      div Made with ❤️ by Jingwood
+      div(class='flex items-center gap-1')
+        icon(name='humbleicons:brand-github')
+        NuxtLink(class='hover:text-gray-300' to='https://github.com/jingwood/retro-strike' target='_blank') See on GitHub
+
 
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { setPlayerName, useCommonData } from '@/common'
-const { elapsedTime, formattedElapsedTime, maxCombo } = useCommonData()
+const { elapsedTime, formattedElapsedTime, maxCombo, showLeaderboard } = useCommonData()
+const { playerName, startTime } = useCommonData()
 
 const canvasWidth = 800
 const canvasHeight = 600
 
 const canvasEl = ref(null)
-const gameState = ref('win') // 'ready', 'playing', 'win', 'lose'
+const gameState = ref('ready') // 'ready', 'playing', 'win', 'lose'
 
 const score = ref(0)
 const combo = ref(0) // Combo multiplier
 
-const { playerName, startTime } = useCommonData()
 
 const player = {
   x: canvasWidth / 2 - 20,
@@ -267,6 +281,8 @@ function startGame() {
   score.value = 0
   combo.value = 0
   maxCombo.value = 0
+
+  doFrame()
 }
 
 onMounted(() => {
@@ -288,6 +304,14 @@ onMounted(() => {
   // Load images
   player.image = new Image()
   player.image.src = '/images/spac.png'
+
+  Promise.all([
+    new Promise(resolve => { player.image.onload = resolve }),
+    new Promise(resolve => { enemyImage.onload = resolve })
+  ]).then(() => {
+    // Images loaded, ready to start rendering
+    draw()
+  })
 
   enemyDirection = 1
 
@@ -338,7 +362,6 @@ onMounted(() => {
     }
   }, 100)
 
-  doFrame()
 })
 
 function drawEnemies() {
@@ -365,14 +388,16 @@ function draw() {
 function doFrame() {
   draw()
 
-  if (gameState.value === 'playing') {
-    updateBullets()
-    updateEnemies()
+  updateBullets()
+  updateEnemies()
+  updateStatus()
 
-    updateStatus()
+  if (gameState.value !== 'playing') {
+    cancelAnimationFrame(doFrame)
+  } else {
+    console.log('Frame updated')
+    requestAnimationFrame(doFrame)
   }
-
-  requestAnimationFrame(doFrame)
 }
 
 function restartGame() {

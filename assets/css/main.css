@@ -11,5 +11,4 @@ html, body {
 
 button {
   @apply px-4 py-2 rounded uppercase cursor-pointer;
-
 }

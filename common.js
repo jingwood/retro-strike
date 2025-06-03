@@ -6,18 +6,12 @@ const maxCombo = ref(0)
 const elapsedTime = ref(0)
 const formattedElapsedTime = computed(() => formatSecondsToTime(elapsedTime.value))
 
+const showLeaderboard = ref(false)
+const lastSubmittedScore = ref(null)
+
 export function setPlayerName(name) {
   playerName.value = name
   window.localStorage.setItem('playerName', name)
-}
-
-export async function submitScore({playerName, score, elapsedTime}) {
-  await addDoc(collection(db, 'scores'), {
-    name: newName,
-    score: props.score,
-    elapsedTime: props.elapsedTime,
-    createdAt: serverTimestamp()
-  })
 }
 
 export function formatSecondsToTime(totalSeconds) {
@@ -34,6 +28,34 @@ export function useCommonData() {
     maxCombo,
     elapsedTime,
     formattedElapsedTime,
+
+    showLeaderboard,
+    lastSubmittedScore,
   }
 }
 
+export function useAPI($axios) {
+  return {
+    async submitScore({playerName, score, elapsedTime, maxCombo}) {
+      const ret = await $axios.post('/retro-strike/v1/submit-score/', {
+        playerName,
+        score,
+        elapsedTime,
+        maxCombo,
+      })
+
+      if (ret.status === 201 && ret.data.status === 'success') {
+        lastSubmittedScore.value = ret.data.id
+        return true
+      }
+    },
+
+    async getLeaderboard() {
+      const ret = await $axios.get('/retro-strike/v1/leaderboard/')
+      if (ret.data.status === 'success') {
+        return ret.data
+      }
+      return []
+    },
+  }
+}
