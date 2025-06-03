@@ -1,23 +1,24 @@
 <template lang="pug">
-div(class='bg-zinc-800/10 backdrop-blur-md border-2 border-pink-300 rounded-md shadow-xl p-4 flex items-start justify-center z-10')
+div(class='bg-zinc-800/50 backdrop-blur-md border-2 border-pink-300 rounded-md shadow-xl p-4 flex items-start justify-center z-10')
   div(class='w-full max-w-2xl mx-auto flex flex-col justify-between h-full')
     div(class='absolute right-0 top-0')
       button(class='hover:bg-gray-500/30 hover:text-gray-200' @click='showLeaderboard=false')
         icon(name='fa6-solid:xmark')
     div(class='flex-none text-center font-rubik font-bold text-2xl text-pink-400 uppercase pb-4')
       | Leaderboard
-    div(class='grow w-full flex flex-col justify-between')
-      div(class='flex-none text-pink-300 text-center flex flex-row justify-center items-center gap-2 p-2 border-b-2 border-pink-500')
+    div(class='grow w-full h-full')
+      div(class=' text-pink-300 text-center flex flex-row justify-center items-center gap-2 p-2 border-b-2 border-pink-500'
+        style='height: 2.5rem;')
         div(class='basis-20 flex-none') Rank
         div(class='basis-auto grow') Player
         div(class='basis-30 flex-none') Score
         div(class='basis-30 flex-none') Time
         div(class='basis-20 flex-none') Max Combo
-      div(class='grow')
-        div(class='overflow-y-scroll')
+      div(class='')
+        div(class='max-h-[430px] overflow-y-scroll')
           div(v-for='(record, index) in records' :key='index'
             class='flex flex-row items-center justify-between gap-2 p-2 text-gray-100'
-            :class="{'bg-gray-700/30': index % 2 === 0}")
+            :class="{'bg-gray-700/30': index % 2 === 0, 'bg-yellow-500 animate-pulse': record._id === lastSubmittedScore}")
             div(class='flex-none basis-20 text-center flex justify-center items-center')
               icon(v-if='index==0' class='text-3xl text-amber-400' name='humbleicons:certificate')
               icon(v-else-if='index==1' class='text-3xl text-zinc-300' name='humbleicons:certificate')
@@ -42,7 +43,7 @@ th, td {
 
 import { useCommonData, useAPI, formatSecondsToTime } from '@/common'
 
-const { showLeaderboard } = useCommonData()
+const { showLeaderboard, lastSubmittedScore } = useCommonData()
 const { getLeaderboard } = useAPI(useNuxtApp().$axios)
 
 const records = ref([])

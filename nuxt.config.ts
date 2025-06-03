@@ -14,7 +14,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://api.jingwood.me',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:14020',
     }
   },
 })

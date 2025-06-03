@@ -3,7 +3,7 @@
 div(class='relative min-h-screen')
   img(class='absolute inset-0 w-full h-full object-cover' src='/images/background1.jpg')
   div(class='absolute inset-0 w-full h-full flex flex-col items-center justify-between')
-    div(class='py-6 h-full flex flex-col items-center justify-around')
+    div(class='basis-1/3 h-full py-6 flex flex-col items-center justify-around')
       div(class='flex-none text-center')
         div(class='text-3xl')
           light-board(:mode='["playing", "win"].includes(gameState) ? "forward" : "blink"' :speed='gameState === "win" ? 100 : 1000')
@@ -21,7 +21,7 @@ div(class='relative min-h-screen')
           div(class='text-red-300') {{ String(score).padStart(5, '0') }}
           div(class='text-gray-300') x{{ combo }}
 
-    div(class='relative')
+    div(class='basis-1/3 relative')
       canvas(class='bg-zinc-900/80 rounded-lg' ref="canvasEl"
         :style='{ width: canvasWidth + "px", height: canvasHeight + "px" }'
         :width="canvasWidth", :height="canvasHeight")
@@ -44,7 +44,7 @@ div(class='relative min-h-screen')
         leaderboard(v-if='showLeaderboard'
           class='absolute inset-0 w-full h-full')
 
-    div(class='text-center text-gray-400 text-xs p-4 flex items-center justify-center gap-8')
+    div(class='basis-1/3 text-center text-gray-400 text-xs p-4 flex items-end justify-center gap-8')
       div Made with ❤️ by Jingwood
       div(class='flex items-center gap-1')
         icon(name='humbleicons:brand-github')
