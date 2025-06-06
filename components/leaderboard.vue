@@ -14,8 +14,10 @@ div(class='bg-zinc-800/50 backdrop-blur-md border-2 border-pink-300 rounded-md s
         div(class='basis-30 flex-none') Score
         div(class='basis-30 flex-none') Time
         div(class='basis-20 flex-none pb-2') Max Combo
-      div(class='')
-        div(class='max-h-[430px] overflow-y-scroll')
+      div(class='relative')
+        div(class='absolute inset-0 w-full h-full flex justify-center items-center' v-if='loading')
+          | Loading...
+        div(class='relative max-h-[430px] overflow-y-scroll')
           div(v-for='(record, index) in records' :key='index'
             class='flex flex-row items-center justify-between gap-2 p-2 text-gray-100'
             :class="{'bg-gray-700/30': index % 2 === 0, 'bg-yellow-500/30 animate-pulse': record._id === lastSubmittedScore}")

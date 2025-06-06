@@ -359,7 +359,7 @@ onMounted(() => {
         y: shooter.y + shooter.height,
         width: 4,
         height: 10,
-        speed: 2 + (Math.random() * 2) + (enemyTotalCount - remainEnemyCount) * 0.2 // Random speed between 3 and 5
+        speed: 2 + (Math.random() * 5) + (enemyTotalCount - remainEnemyCount) * 0.5 // Random speed between 3 and 5
       })
     }
   }, 100)
