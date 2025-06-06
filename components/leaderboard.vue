@@ -13,12 +13,12 @@ div(class='bg-zinc-800/50 backdrop-blur-md border-2 border-pink-300 rounded-md s
         div(class='basis-auto grow') Player
         div(class='basis-30 flex-none') Score
         div(class='basis-30 flex-none') Time
-        div(class='basis-20 flex-none') Max Combo
+        div(class='basis-20 flex-none pb-2') Max Combo
       div(class='')
         div(class='max-h-[430px] overflow-y-scroll')
           div(v-for='(record, index) in records' :key='index'
             class='flex flex-row items-center justify-between gap-2 p-2 text-gray-100'
-            :class="{'bg-gray-700/30': index % 2 === 0, 'bg-yellow-500 animate-pulse': record._id === lastSubmittedScore}")
+            :class="{'bg-gray-700/30': index % 2 === 0, 'bg-yellow-500/30 animate-pulse': record._id === lastSubmittedScore}")
             div(class='flex-none basis-20 text-center flex justify-center items-center')
               icon(v-if='index==0' class='text-3xl text-amber-400' name='humbleicons:certificate')
               icon(v-else-if='index==1' class='text-3xl text-zinc-300' name='humbleicons:certificate')
@@ -28,7 +28,7 @@ div(class='bg-zinc-800/50 backdrop-blur-md border-2 border-pink-300 rounded-md s
             div(class='flex-none basis-30 text-right') {{ record.score }}
             div(class='flex-none basis-30 text-center') {{ formatSecondsToTime(record.elapsedTime) }}
             div(class='flex-none basis-20 text-right') {{ record.maxCombo }}
-    div(class='flex-none text-center text-sm')
+    div(class='flex-none text-center text-xs')
       | Showing {{ records.length }} of {{ totalRecords }} records
 
 </template>
@@ -48,15 +48,8 @@ const { getLeaderboard } = useAPI(useNuxtApp().$axios)
 
 const records = ref([])
 const totalRecords = ref(0)
-const { $axios } = useNuxtApp()
 const loading = ref(true)
 const errorMessage = ref('')
-
-const metalColors = [
-  'text-yellow-500', // Gold
-  'text-silver-500', // Silver
-  'text-bronze-500', // Bronze
-]
 
 onMounted(async () => {
   try {

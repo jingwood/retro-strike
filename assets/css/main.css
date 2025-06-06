@@ -9,6 +9,11 @@ html, body {
   font-family: 'Rubik Gemstones', sans-serif;
 }
 
+.font-sixtyfour {
+  font-family: 'Sixtyfour Convergence', sans-serif;
+}
+
 button {
   @apply px-4 py-2 rounded uppercase cursor-pointer;
+
 }

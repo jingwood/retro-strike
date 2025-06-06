@@ -1,9 +1,9 @@
 
 const playerName = ref('')
 const startTime = ref(Date.now())
-const maxCombo = ref(0)
-
+const score = ref(0)
 const elapsedTime = ref(0)
+const maxCombo = ref(0)
 const formattedElapsedTime = computed(() => formatSecondsToTime(elapsedTime.value))
 
 const showLeaderboard = ref(false)
@@ -25,6 +25,7 @@ export function useCommonData() {
   return {
     playerName,
     startTime,
+    score,
     maxCombo,
     elapsedTime,
     formattedElapsedTime,
@@ -36,12 +37,12 @@ export function useCommonData() {
 
 export function useAPI($axios) {
   return {
-    async submitScore({playerName, score, elapsedTime, maxCombo}) {
+    async submitScore() {
       const ret = await $axios.post('/retro-strike/v1/submit-score/', {
-        playerName,
-        score,
-        elapsedTime,
-        maxCombo,
+        playerName: playerName.value,
+        score: score.value,
+        elapsedTime: elapsedTime.value,
+        maxCombo: maxCombo.value,
       })
 
       if (ret.status === 201 && ret.data.status === 'success') {

@@ -2,6 +2,7 @@
 
 div(class='relative min-h-screen')
   img(class='absolute inset-0 w-full h-full object-cover' src='/images/background1.jpg')
+  fireworks(v-if='gameState === "win"' class='absolute inset-0 w-full h-full')
   div(class='absolute inset-0 w-full h-full flex flex-col items-center justify-between')
     div(class='basis-1/3 h-full py-6 flex flex-col items-center justify-around')
       div(class='flex-none text-center')
@@ -16,29 +17,31 @@ div(class='relative min-h-screen')
             @click='showLeaderboard = true')
             icon(class='text-2xl' name='humbleicons:crown')
             | LeaderBoard
-        div(class='flex flex-row gap-12 text-xl')
+        div(class='flex flex-row gap-12 text-xl font-sixtyfour')
           div(class='text-yellow-300') {{ formattedElapsedTime }}
           div(class='text-red-300') {{ String(score).padStart(5, '0') }}
-          div(class='text-gray-300') x{{ combo }}
+          div(class='text-gray-300' :class='{"animate-ping": combo>10}' ) x{{ combo }}
 
     div(class='basis-1/3 relative')
       canvas(class='bg-zinc-900/80 rounded-lg' ref="canvasEl"
         :style='{ width: canvasWidth + "px", height: canvasHeight + "px" }'
         :width="canvasWidth", :height="canvasHeight")
 
-      div(class='absolute inset-0 w-full h-full flex items-center justify-center')
+      div(class='absolute inset-0 w-full h-full flex items-center justify-center'
+          @click='tryStartGame')
         div(class='flex flex-col justify-center gap-6 animate-pulse' v-if="gameState === 'ready'")
           button(@click="startGame" class='text-3xl bg-white hover:bg-amber-200 text-black px-4 py-2 rounded uppercase font-rubik') Start
           div(class='uppercase') Or press mouse button to start
 
         div(class='flex flex-col items-center justify-center rounded-xl bg-lime-700/90 px-12 py-8 gap-6' v-if="gameState === 'win'")
-          div(class='text-yellow-300 text-3xl uppercase') Victory!
-          score-post(:score='score')
+          div(class='text-yellow-300 text-3xl uppercase h-6 animate-bounce')
+            text-pulse(text='Victory!')
+          score-report
           button(@click="restartGame" class='bg-white text-black px-4 py-2 rounded uppercase hover:bg-amber-200 font-rubik') Restart
 
-        div(class='flex flex-col items-center justify-center gap-6 rounded-xl bg-red-300/70 px-12 py-8' v-if="gameState === 'lose'")
+        div(class='flex flex-col items-center justify-center gap-6 rounded-xl bg-red-300/80 px-12 py-8' v-if="gameState === 'lose'")
           div(class='text-red-500 text-2xl uppercase animate-pulse') Game Over
-          score-post(v-if='score > 0' :score='score')
+          score-report
           button(@click="restartGame" class='text-2xl bg-white text-black hover:bg-amber-200 font-rubik' animate-pulse) Retry
 
         leaderboard(v-if='showLeaderboard'
@@ -55,18 +58,18 @@ div(class='relative min-h-screen')
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { setPlayerName, useCommonData } from '@/common'
-const { elapsedTime, formattedElapsedTime, maxCombo, showLeaderboard } = useCommonData()
-const { playerName, startTime } = useCommonData()
+import { useCommonData, useAPI } from '@/common'
+const { playerName, startTime, elapsedTime, formattedElapsedTime, score, maxCombo, showLeaderboard } = useCommonData()
+const { submitScore } = useAPI(useNuxtApp().$axios)
+
+const combo = ref(0) // Combo multiplier
+const showScorePost = ref(false) // Show score submission UI
 
 const canvasWidth = 800
 const canvasHeight = 600
 
 const canvasEl = ref(null)
 const gameState = ref('ready') // 'ready', 'playing', 'win', 'lose'
-
-const score = ref(0)
-const combo = ref(0) // Combo multiplier
 
 
 const player = {
@@ -127,42 +130,39 @@ resetAllEnemies()
 
 let ctx, canvas, canvasRect, enemyImage, enemyDirection
 
-function updateBullets() {
+function updateBullets(deltaTime) {
   if (gameState.value !== 'playing') {
     return
   }
 
-  // Update and remove off-screen player bullets
   for (let i = bullets.length - 1; i >= 0; i--) {
     const bullet = bullets[i]
-    bullet.y -= bullet.speed
-
+    bullet.y -= bullet.speed * deltaTime * 60 // 元のspeedを60fps基準で補正
     if (bullet.y + bullet.height < 0) {
       bullets.splice(i, 1)
-      combo.value = 0 // Reset combo when bullet goes off-screen
+      combo.value = 0
     }
   }
 
-  // Update enemy bullets and check for collision with player
   for (let i = enemyBullets.length - 1; i >= 0; i--) {
     const bullet = enemyBullets[i]
-    bullet.y += bullet.speed
-
+    bullet.y += bullet.speed * deltaTime * 60
     if (bullet.y > canvas.height) {
       enemyBullets.splice(i, 1)
-    } else {
-      const hit =
-        bullet.x < player.x + player.width &&
-        bullet.x + bullet.width > player.x &&
-        bullet.y < player.y + player.height &&
-        bullet.y + bullet.height > player.y
-
-      if (hit) {
-        gameState.value = 'lose'
-        return
-      }
+    } else if (checkCollision(bullet, player)) {
+      endGame()
+      return
     }
   }
+}
+
+function checkCollision(a, b) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y
+  )
 }
 
 function updateEnemies() {
@@ -213,7 +213,8 @@ function updateEnemies() {
 
   const allEnemiesHit = enemies.every(e => e.hit)
   if (allEnemiesHit) {
-    gameState.value = 'win'
+    victoryGame()
+    return
   }
 }
 
@@ -286,11 +287,10 @@ function startGame() {
 }
 
 onMounted(() => {
-  let playerName = window.localStorage.getItem('playerName')
-  if (!playerName) {
-    playerName = 'Player#' + Math.floor(100000 + Math.random() * 100000)
+  let storedPlayerName = window.localStorage.getItem('playerName')
+  if (storedPlayerName) {
+    playerName.value = storedPlayerName
   }
-  setPlayerName(playerName)
 
   canvas = canvasEl.value
   ctx = canvas.getContext('2d')
@@ -334,6 +334,7 @@ onMounted(() => {
   // Fire bullets at interval
   setInterval(() => {
     if (gameState.value !== 'playing') return
+    if (document.hidden) return
 
     bullets.push({
       x: player.x + player.width / 2 - 2,
@@ -347,6 +348,7 @@ onMounted(() => {
   // Enemy fires bullets at interval
   setInterval(() => {
     if (gameState.value !== 'playing') return
+    if (document.hidden) return
 
     const shooters = enemies.filter(e => !e.hit)
     if (shooters.length > 0) {
@@ -357,7 +359,7 @@ onMounted(() => {
         y: shooter.y + shooter.height,
         width: 4,
         height: 10,
-        speed: 1 + (Math.random() * 2) + (enemyTotalCount - remainEnemyCount) * 0.2 // Random speed between 3 and 5
+        speed: 2 + (Math.random() * 2) + (enemyTotalCount - remainEnemyCount) * 0.2 // Random speed between 3 and 5
       })
     }
   }, 100)
@@ -385,19 +387,57 @@ function draw() {
   drawCombo()
 }
 
-function doFrame() {
+let lastTimestamp = 0
+
+function updateGame(deltaTime) {
+  updateBullets(deltaTime)
+  updateEnemies(deltaTime)
+  updateStatus()
+}
+
+function doFrame(timestamp) {
+  // if (document.hidden) {
+  //   return
+  // }
+  if (!lastTimestamp) lastTimestamp = timestamp
+  const deltaTime = (timestamp - lastTimestamp) / 1000 // 秒単位
+  lastTimestamp = timestamp
+
+  updateGame(deltaTime)
   draw()
 
-  updateBullets()
-  updateEnemies()
-  updateStatus()
-
-  if (gameState.value !== 'playing') {
-    cancelAnimationFrame(doFrame)
-  } else {
+  if (gameState.value === 'playing') {
     console.log('Frame updated')
     requestAnimationFrame(doFrame)
   }
+}
+
+function victoryGame() {
+  gameState.value = 'win'
+
+  // Stop the game loop
+  cancelAnimationFrame(doFrame)
+
+  autoSubmitScore()
+}
+
+function endGame() {
+  gameState.value = 'lose'
+
+  // Stop the game loop
+  cancelAnimationFrame(doFrame)
+
+  autoSubmitScore()
+}
+
+async function autoSubmitScore() {
+  if (!playerName.value) {
+    showScorePost.value = true
+    return
+  }
+
+  // Show score submission UI
+  await submitScore()
 }
 
 function restartGame() {
@@ -413,6 +453,12 @@ function restartGame() {
 
   // Restart
   startGame()
+}
+
+function tryStartGame() {
+  if (gameState.value === 'ready') {
+    startGame()
+  }
 }
 
 </script>
