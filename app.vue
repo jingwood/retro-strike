@@ -29,7 +29,7 @@ div(class='relative min-h-screen')
         :width="canvasWidth", :height="canvasHeight")
 
       div(class='absolute inset-0 w-full h-full flex items-center justify-center'
-          @click='tryStartGame')
+          @click.stop='tryStartGame')
         div(class='flex flex-col justify-center gap-6 animate-pulse' v-if="gameState === 'ready'")
           button(@click="startGame" class='text-3xl bg-white hover:bg-amber-200 text-black px-4 py-2 rounded uppercase font-rubik') Start
           div(class='uppercase') Or press mouse button to start
