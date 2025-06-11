@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+html, body {
+  @apply m-0 p-0 bg-zinc-900 text-gray-400;
+  font-family: 'DynaPuff', sans-serif;
+}
+
+.font-rubik {
+  font-family: 'Rubik Gemstones', sans-serif;
+}
+
+.font-sixtyfour {
+  font-family: 'Sixtyfour Convergence', sans-serif;
+}
+
+button {
+  @apply px-4 py-2 rounded uppercase cursor-pointer;
+
+}
