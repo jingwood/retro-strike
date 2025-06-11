@@ -1,75 +1,16 @@
-# Nuxt Minimal Starter
+# Retro Strike
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Retro Strike is a classic-style arcade shooter game project. Blast through waves of enemies, collect power-ups, and aim for the highest score in this retro-inspired adventure.
 
-## Setup
+![Retro Strike Screenshot](public/images/og-image.jpg)
 
-Make sure to install dependencies:
+Play online: [https://retro-strike.jingwood.me](https://retro-strike.jingwood.me)
 
-```bash
-# npm
-npm install
+# Development 
 
-# pnpm
-pnpm install
+This game was developed using Nuxt, Vue, and Canvas2D.
 
-# yarn
-yarn install
+You can clone the repository, run `yarn`, and then `yarn dev` to build and run it locally. 
 
-# bun
-bun install
-```
+Feel free to share your suggestions or create your own version!
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
